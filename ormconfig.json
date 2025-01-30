@@ -1,0 +1,19 @@
+{
+  "type": "postgres",
+  "host": "your-supabase-host",
+  "port": 5432,
+  "username": "your-supabase-username",
+  "password": "your-supabase-password",
+  "database": "your-supabase-database",
+  "synchronize": true,
+  "logging": true,
+  "entities": [
+    "dist/**/*.entity{.ts,.js}"
+  ],
+  "migrations": [
+    "dist/migration/**/*.js"
+  ],
+  "subscribers": [
+    "dist/subscriber/**/*.js"
+  ]
+}
