@@ -65,7 +65,3 @@ Using the supabase database:
   - `POST /articles` to create a new article.
   - `PUT /articles/:id` to update an existing article.
   - `DELETE /articles/:id` to delete an article.
-
-## License
-
-This project is licensed under the MIT License.
