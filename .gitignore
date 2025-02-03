@@ -1,1 +1,10 @@
 node_modules
+/dist
+/supabase
+/coverage
+queris.http
+
+.env
+.vercel
+ormconfig.json
+package-lock.json

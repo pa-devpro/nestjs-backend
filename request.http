@@ -1,0 +1,18 @@
+
+### Get articles of a specific userId
+GET http://localhost:3001/articles?userId=fc5c4e4a-0cb6-420b-9268-8fed8dd7d51c
+
+### Get Article by Id
+GET http://localhost:3001/articles/4
+
+### Update Article
+PUT http://localhost:3001/articles/2
+Content-Type: application/json
+
+{
+    "title": "Updated Article Title"
+}
+
+### Delete Article
+DELETE http://localhost:3001/articles/2
+Content-Type: application/json
