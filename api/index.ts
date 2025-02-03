@@ -1,4 +1,3 @@
-import "tsconfig-paths/register";
 import express from "express";
 import { NestFactory } from "@nestjs/core";
 import { ExpressAdapter } from "@nestjs/platform-express";

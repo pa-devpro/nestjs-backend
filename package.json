@@ -5,8 +5,8 @@
   "main": "dist/main.js",
   "scripts": {
     "dev": "nest start --watch",
-    "start": "node -r tsconfig-paths/register dist/main.js",
-    "build": "nest build",
+    "start": "node dist/main.js",
+    "build": "nest build && tsc-alias",
     "vercel-build": "npm run build",
     "watch": "tsc -w",
     "prestart": "npm run build"
@@ -41,6 +41,7 @@
     "ts-jest": "^29.2.5",
     "ts-loader": "^9.0.0",
     "ts-node": "^10.0.0",
+    "tsc-alias": "^1.8.10",
     "tsconfig-paths": "^4.2.0"
   },
   "engines": {
