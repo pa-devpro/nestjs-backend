@@ -1,6 +1,10 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import * as dotenv from "dotenv";
+import { ValidationPipe } from "@nestjs/common";
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
+import compression from "compression";
 
 // Load and verify env variables
 const result = dotenv.config({ path: ".env" });
@@ -10,6 +14,33 @@ if (result.error) {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Security headers
+  app.use(helmet());
+
+  // Compression
+  app.use(compression());
+
+  // Rate limiting
+  app.use(
+    rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // limit each IP to 100 requests per windowMs
+    })
+  );
+
+  // Global validation pipe
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    })
+  );
+
   app.enableCors({
     origin: (
       origin: string,
