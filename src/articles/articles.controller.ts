@@ -9,9 +9,8 @@ import {
   Query,
 } from "@nestjs/common";
 import { ArticlesService } from "./articles.service";
-import { CreateArticleDto, getArticleDto } from "./dto/create-article.dto";
+import { CreateArticleDto } from "./dto/create-article.dto";
 import { UpdateArticleDto } from "./dto/update-article.dto";
-import { SavedArticle } from "@/supabase/supabase-types";
 
 @Controller("articles")
 export class ArticlesController {
@@ -29,6 +28,8 @@ export class ArticlesController {
 
   @Post()
   async createArticle(@Body() createArticleDto: CreateArticleDto) {
+    console.log("Controller: createArticleDto", createArticleDto);
+
     return this.articlesService.create(createArticleDto);
   }
 

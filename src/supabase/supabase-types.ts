@@ -6,7 +6,8 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export type SavedArticle = TablesInsert<"saved_articles">;
+export type SavedArticle =
+  Database["public"]["Tables"]["saved_articles"]["Row"];
 
 export type Database = {
   public: {

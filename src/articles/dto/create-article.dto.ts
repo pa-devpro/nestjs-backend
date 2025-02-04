@@ -1,4 +1,10 @@
-import { IsString, IsArray, IsUrl, IsDateString } from "class-validator";
+import {
+  IsString,
+  IsArray,
+  IsUrl,
+  IsDateString,
+  IsNotEmpty,
+} from "class-validator";
 
 export class CreateArticleDto {
   @IsString()
@@ -44,8 +50,8 @@ export class CreateArticleDto {
   user_id: string = "";
 }
 
-export class getArticleDto {
-  title?: string = "";
-  content?: string = "";
-  authorId?: string = "";
+export class getArticleDto extends CreateArticleDto {
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
 }

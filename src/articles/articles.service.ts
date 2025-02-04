@@ -40,19 +40,8 @@ export class ArticlesService {
     return data || [];
   }
 
-  private renameKeys(obj: any, newKeys: any) {
-    const keyValues = Object.keys(obj).map((key) => {
-      const newKey = newKeys[key] || key;
-      return { [newKey]: obj[key] };
-    });
-    return Object.assign({}, ...keyValues);
-  }
-
   async create(articleToCreate: CreateArticleDto) {
-    articleToCreate = this.renameKeys(articleToCreate, {
-      generatedAiContent: "generated_ai_content",
-      questionsAndAnswers: "questions_and_answers",
-    });
+    console.log("Service: articleToCreate", articleToCreate);
 
     const { error } = await this.supabase
       .from("saved_articles")
@@ -61,20 +50,23 @@ export class ArticlesService {
     if (error) {
       throw new Error(error.message);
     }
-    return { success: true };
+
+    return { success: true, message: `Article created successfully` };
   }
 
-  async update(id: string, updateArticleDto: UpdateArticleDto) {
-    const { data, error } = await this.supabase
+  async update(id: string, articleToUpdate: UpdateArticleDto) {
+    const { error } = await this.supabase
       .from("saved_articles")
-      .update(updateArticleDto)
+      .update(articleToUpdate)
       .eq("id", id);
 
     if (error) {
       throw new Error(error.message);
     }
-
-    return { success: true };
+    return {
+      success: true,
+      message: `Article #${id} updated successfully`,
+    };
   }
 
   async delete(id: string) {
@@ -85,6 +77,6 @@ export class ArticlesService {
     if (error) {
       throw new Error(error.message);
     }
-    return { success: true };
+    return { success: true, message: `Article #${id} deleted successfully` };
   }
 }
