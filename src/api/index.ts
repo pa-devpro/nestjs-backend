@@ -3,6 +3,7 @@ import { NestFactory } from "@nestjs/core";
 import { ExpressAdapter } from "@nestjs/platform-express";
 import { VercelRequest, VercelResponse } from "@vercel/node";
 import { AppModule } from "@/app.module";
+import { configureApp } from "@/configApp";
 
 let server: express.Express;
 
@@ -17,25 +18,11 @@ async function bootstrapServer(): Promise<express.Express> {
     AppModule,
     new ExpressAdapter(expressApp)
   );
-  app.enableCors({
-    origin: (
-      origin: string,
-      callback: (arg0: Error | null, arg1: boolean | undefined) => void
-    ) => {
-      // Remove trailing slash (if any) from the allowed origin.
-      const allowed = process.env.CLIENT_URL?.replace(/\/$/, "");
-      // Remove trailing slash from the received origin.
-      const requestOrigin = origin?.replace(/\/$/, "");
-      if (!origin || requestOrigin === allowed) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"), false);
-      }
-    },
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-    allowedHeaders: "Content-Type, Accept",
-    credentials: true,
-  });
+
+  // configure app
+  configureApp(app);
+
+  // initilize app
   await app.init();
   return expressApp;
 }
