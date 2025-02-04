@@ -18,7 +18,7 @@ export class ArticlesController {
 
   @Get(":id")
   async getArticle(@Param("id") id: string) {
-    return this.articlesService.get(id);
+    return this.articlesService.getArticleById(id);
   }
 
   @Get()

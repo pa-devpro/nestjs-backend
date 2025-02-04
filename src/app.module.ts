@@ -3,6 +3,7 @@ import { ArticlesModule } from "./articles/articles.module";
 import { AppController } from "./app.controller";
 import { ConfigModule } from "@nestjs/config";
 import { SupabaseService } from "./supabase";
+import { ScheduleModule } from "@nestjs/schedule";
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { SupabaseService } from "./supabase";
       envFilePath: ".env",
     }),
     ArticlesModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [SupabaseService],

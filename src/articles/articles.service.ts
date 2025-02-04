@@ -1,45 +1,71 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger, RequestTimeoutException } from "@nestjs/common";
 import { UpdateArticleDto } from "./dto/update-article.dto";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { SupabaseService } from "@/supabase";
 import { SavedArticle } from "@/supabase/supabase-types";
 import { CreateArticleDto } from "./dto";
+import { Timeout } from "@/common/timeout.decorator";
 
 @Injectable()
 export class ArticlesService {
   private supabase: SupabaseClient;
+  private readonly logger = new Logger(ArticlesService.name);
 
   constructor(private supabaseService: SupabaseService) {
     this.supabase = this.supabaseService.getClient();
+    this.logger.log("ArticlesService initialized");
   }
 
-  async get(id: string): Promise<SavedArticle> {
-    const { data, error } = await this.supabase
-      .from("saved_articles")
-      .select("*")
-      .eq("id", id)
-      .single();
+  @Timeout()
+  async getArticleById(id: string): Promise<SavedArticle> {
+    try {
+      if (!id) {
+        this.logger.warn("Article ID is required");
+        throw new Error("Article ID is required");
+      }
 
-    if (error) {
-      throw new Error(error.message);
+      this.logger.debug(`Fetching article with id: ${id}`);
+
+      const { data } = await this.supabase
+        .from("saved_articles")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      this.logger.debug(`Successfully fetched article ${id}`);
+      return data || {};
+    } catch (error) {
+      this.logger.error(
+        `Unexpected error in get(${id}): ${(error as any).message}`
+      );
+      throw error;
     }
-
-    return data || {};
   }
 
+  @Timeout()
   async getArticlesByUserId(userId: string): Promise<SavedArticle[]> {
-    const { data, error } = await this.supabase
-      .from("saved_articles")
-      .select("*")
-      .eq("user_id", userId);
+    try {
+      const { data, error } = await this.supabase
+        .from("saved_articles")
+        .select("*")
+        .eq("user_id", userId);
 
-    if (error) {
-      throw new Error(error.message);
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return data || [];
+    } catch (error) {
+      this.logger.error(
+        `Unexpected error in getArticlesByUserId(${userId}): ${
+          (error as any).message
+        }`
+      );
+      throw error;
     }
-
-    return data || [];
   }
 
+  @Timeout()
   async create(articleToCreate: CreateArticleDto) {
     console.log("Service: articleToCreate", articleToCreate);
 
@@ -54,29 +80,49 @@ export class ArticlesService {
     return { success: true, message: `Article created successfully` };
   }
 
+  @Timeout()
   async update(id: string, articleToUpdate: UpdateArticleDto) {
-    const { error } = await this.supabase
-      .from("saved_articles")
-      .update(articleToUpdate)
-      .eq("id", id);
+    try {
+      this.logger.debug(`Updating article with id: ${id}`);
+      const { error } = await this.supabase
+        .from("saved_articles")
+        .update(articleToUpdate)
+        .eq("id", id);
 
-    if (error) {
-      throw new Error(error.message);
+      if (error) {
+        throw new Error(error.message);
+      }
+      return {
+        success: true,
+        message: `Article #${id} updated successfully`,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Unexpected error in update(${id}): ${(error as any).message}`
+      );
+      throw error;
     }
-    return {
-      success: true,
-      message: `Article #${id} updated successfully`,
-    };
   }
 
+  @Timeout()
   async delete(id: string) {
-    const { error } = await this.supabase
-      .from("saved_articles")
-      .delete()
-      .eq("id", id);
-    if (error) {
-      throw new Error(error.message);
+    try {
+      const { error } = await this.supabase
+        .from("saved_articles")
+        .delete()
+        .eq("id", id);
+      if (error) {
+        throw new Error(error.message);
+      }
+      return {
+        success: true,
+        message: `Article #${id} deleted successfully`,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Unexpected error in delete(${id}): ${(error as any).message}`
+      );
+      throw error;
     }
-    return { success: true, message: `Article #${id} deleted successfully` };
   }
 }

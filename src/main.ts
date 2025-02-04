@@ -20,7 +20,7 @@ async function bootstrap() {
   // Initialize app
   await app.listen(process.env.PORT || 3001, () => {
     console.log(
-      `Server is running on ${process.env.API_URL}:${process.env.API_PORT}`
+      `Server is running on ${process.env.API_URL}:${process.env.API_PORT}/health`
     );
   });
 }
