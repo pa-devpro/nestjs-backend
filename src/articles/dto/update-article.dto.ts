@@ -1,7 +1,11 @@
-import { SavedArticle } from "@/supabase/supabase-types";
-import { IsOptional } from "class-validator";
+import { IsArray, IsOptional, ValidateNested } from "class-validator";
+import { QuestionAnswerDto } from "./create-article.dto";
+import { Type } from "class-transformer";
 
 export class UpdateArticleDto {
   @IsOptional()
-  questions_and_answers?: SavedArticle["questions_and_answers"];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => QuestionAnswerDto)
+  questions_and_answers?: QuestionAnswerDto[];
 }

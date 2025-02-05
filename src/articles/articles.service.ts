@@ -134,7 +134,7 @@ export class ArticlesService {
       // If article for user does not exist, create it
       const { data: articleCreated, error: databaseError } = await this.supabase
         .from("saved_articles")
-        .insert([articleToCreate])
+        .insert(articleToCreate)
         .select("id")
         .single<SavedArticle>();
 

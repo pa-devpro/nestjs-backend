@@ -1,13 +1,17 @@
+import { Type } from "class-transformer";
 import {
   IsString,
   IsArray,
   IsUrl,
   IsDateString,
   IsNotEmpty,
+  IsOptional,
+  ValidateNested,
 } from "class-validator";
 
 export class CreateArticleDto {
   @IsString()
+  @IsOptional()
   author: string = "";
 
   @IsString()
@@ -41,10 +45,20 @@ export class CreateArticleDto {
   generated_ai_content: string = "";
 
   @IsArray()
-  questions_and_answers: { question: string; answer: string }[] = [];
+  @ValidateNested({ each: true })
+  @Type(() => QuestionAnswerDto)
+  questions_and_answers: QuestionAnswerDto[] = [];
 
   @IsString()
   user_id: string = "";
+}
+
+export class QuestionAnswerDto {
+  @IsString()
+  question: string = "";
+
+  @IsString()
+  answer: string = "";
 }
 
 export class getArticleDto extends CreateArticleDto {
