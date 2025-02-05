@@ -94,3 +94,51 @@ ThrottlerGuard
 - This provides basic protection against too many requests (DoS/DDoS attacks) and helps prevent abuse while ensuring normal traffic is not hindered.
 
 Include these settings in your local or deployed environments as needed to balance performance and security.
+
+Error Handling Documentation
+This document outlines the error handling changes implemented in the Articles Service. The goal was to ensure a consistent and robust approach for managing expected and unexpected errors, while providing clear, actionable feedback in both logs and API responses.
+
+#### Key Changes
+
+##### 1. Global Exception Filtering
+
+Global Filter Registration:
+The application now registers a global exception filter (see configApp.ts), which catches all instances of HttpException and formats their responses consistently.
+Custom Message:
+The filter appends custom information to errors (except for validation errors) so that error responses are uniform.
+
+##### 2. Validation of Input Parameters
+
+Early Validation:
+Controllers (or a global pipeline) validate required parameters (e.g., userId in getArticlesByUserId).
+Bad Request:
+If a required parameter is missing, a HttpException with status 400 BAD REQUEST is thrown immediately.
+
+##### 3. Custom Exception Classes
+
+DatabaseException:
+Used to wrap errors returned from the database (Supabase) in operations such as fetching, inserting, or updating articles.
+ConflictException:
+Thrown when duplicate articles are detected (based on a combination of title and user_id), returning a 409 CONFLICT HTTP status.
+
+##### 4. Logging and Debugging Enhancements
+
+Detailed Logging:
+Logging statements are added before and after database calls to trace the flow of execution.
+Error Context:
+When errors occur, additional context (e.g., user ID or article ID) is logged to simplify troubleshooting.
+
+##### 5. Handling of Unexpected Errors
+
+Generic Internal Server Error:
+In catch blocks, if the caught error is not already an HttpException, it is wrapped in a generic HttpException with status 500 INTERNAL SERVER ERROR.
+
+### Summary
+
+The error handling strategy in the Articles Service consists of:
+
+- Early and consistent validation: Ensuring all required inputs are validated.
+- Consistent error responses: All errors are handled via a global exception filter and custom exception classes, ensuring standard error payloads.
+- Enhanced logging: Detailed logging across service methods provides better insight into failures and helps with debugging.
+
+These improvements make the application more robust, maintainable, and easier to troubleshoot in production.

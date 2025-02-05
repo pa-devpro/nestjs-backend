@@ -1,8 +1,7 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import * as dotenv from "dotenv";
-import configure from "@vendia/serverless-express";
-
+import { configureApp } from "./configApp";
 // Load and verify env variables
 const result = dotenv.config({ path: ".env" });
 if (result.error) {
@@ -14,8 +13,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Configure app
-  const expressApp = app.getHttpAdapter().getInstance();
-  configure({ app: expressApp });
+  configureApp(app);
 
   // Initialize app
   await app.listen(process.env.PORT || 3001, () => {

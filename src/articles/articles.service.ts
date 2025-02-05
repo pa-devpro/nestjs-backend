@@ -1,10 +1,18 @@
-import { Injectable, Logger, RequestTimeoutException } from "@nestjs/common";
+import {
+  ConflictException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
 import { UpdateArticleDto } from "./dto/update-article.dto";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { SupabaseService } from "@/supabase";
 import { SavedArticle } from "@/supabase/supabase-types";
 import { CreateArticleDto } from "./dto";
 import { Timeout } from "@/common/timeout.decorator";
+import { DatabaseException } from "@/common/exceptions/database.exception";
 
 @Injectable()
 export class ArticlesService {
@@ -21,39 +29,70 @@ export class ArticlesService {
     try {
       if (!id) {
         this.logger.warn("Article ID is required");
-        throw new Error("Article ID is required");
+        throw new HttpException(
+          "Article ID is required",
+          HttpStatus.BAD_REQUEST
+        );
       }
 
       this.logger.debug(`Fetching article with id: ${id}`);
 
-      const { data } = await this.supabase
+      const { data, error: databaseError } = await this.supabase
         .from("saved_articles")
         .select("*")
         .eq("id", id)
-        .single();
+        .single<SavedArticle>();
 
-      this.logger.debug(`Successfully fetched article ${id}`);
-      return data || {};
+      if (databaseError) {
+        throw new DatabaseException(databaseError.message);
+      }
+
+      if (!data) {
+        throw new NotFoundException(`Article with id ${id} not found`);
+      }
+
+      this.logger.debug(`Successfully fetched article ${data.id}`);
+      return data;
     } catch (error) {
       this.logger.error(
         `Unexpected error in get(${id}): ${(error as any).message}`
       );
-      throw error;
+
+      // Rethrow the error as an HttpException if it's not already one.
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        "Internal server error",
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
   }
 
   @Timeout()
   async getArticlesByUserId(userId: string): Promise<SavedArticle[]> {
     try {
+      if (!userId) {
+        this.logger.warn("User ID is required");
+        throw new HttpException("User ID is required", HttpStatus.BAD_REQUEST);
+      }
+
+      this.logger.debug(`Fetching articles for user with id: ${userId}`);
+
       const { data, error } = await this.supabase
         .from("saved_articles")
         .select("*")
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .returns<SavedArticle[]>();
 
       if (error) {
-        throw new Error(error.message);
+        this.logger.error(
+          `Error fetching articles for user ${userId}: ${error.message}`
+        );
+        throw new DatabaseException(error.message);
       }
 
+      this.logger.debug(`Successfully fetched articles for user ${userId}`);
       return data || [];
     } catch (error) {
       this.logger.error(
@@ -61,68 +100,140 @@ export class ArticlesService {
           (error as any).message
         }`
       );
-      throw error;
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        "Internal server error",
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
   }
 
   @Timeout()
   async create(articleToCreate: CreateArticleDto) {
-    console.log("Service: articleToCreate", articleToCreate);
+    try {
+      this.logger.debug("Creating article", articleToCreate);
 
-    const { error } = await this.supabase
-      .from("saved_articles")
-      .insert([articleToCreate]);
+      // Check for duplicates based on URL and user_id
+      const { data: existingArticle, error: checkError } = await this.supabase
+        .from("saved_articles")
+        .select("*")
+        .eq("title", articleToCreate.title)
+        .eq("user_id", articleToCreate.user_id)
+        .single<SavedArticle>();
 
-    if (error) {
-      throw new Error(error.message);
+      if (checkError && checkError.code !== "PGRST116") {
+        throw new DatabaseException(checkError.message);
+      }
+
+      if (existingArticle) {
+        throw new ConflictException("Article already exists");
+      }
+
+      // If article for user does not exist, create it
+      const { data: articleCreated, error: databaseError } = await this.supabase
+        .from("saved_articles")
+        .insert([articleToCreate])
+        .select("id")
+        .single<SavedArticle>();
+
+      if (databaseError) {
+        throw new DatabaseException(databaseError.message);
+      }
+
+      this.logger.debug(`Article #${articleCreated.id} created successfully`, {
+        articleCreated,
+      });
+      return {
+        success: true,
+        message: `Article #${articleCreated.id} created successfully`,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Unexpected error in create(${articleToCreate}): ${
+          (error as any).message
+        }`
+      );
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        "Internal server error",
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
-
-    return { success: true, message: `Article created successfully` };
   }
 
   @Timeout()
   async update(id: string, articleToUpdate: UpdateArticleDto) {
     try {
       this.logger.debug(`Updating article with id: ${id}`);
-      const { error } = await this.supabase
+      const { data: articleUpdated, error } = await this.supabase
         .from("saved_articles")
         .update(articleToUpdate)
-        .eq("id", id);
+        .eq("id", id)
+        .select("id")
+        .single<Pick<SavedArticle, "id">>();
 
       if (error) {
-        throw new Error(error.message);
+        this.logger.error(`Error updating article ${id}: ${error.message}`);
+        throw new DatabaseException(
+          error.message || `Error updating article ${id}`
+        );
       }
       return {
         success: true,
-        message: `Article #${id} updated successfully`,
+        message: `Article #${articleUpdated.id} updated successfully`,
       };
     } catch (error) {
       this.logger.error(
         `Unexpected error in update(${id}): ${(error as any).message}`
       );
-      throw error;
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        "Internal server error",
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
   }
 
   @Timeout()
   async delete(id: string) {
     try {
-      const { error } = await this.supabase
+      this.logger.debug(`Deleting article with id: ${id}`);
+
+      const { data: articleDeleted, error } = await this.supabase
         .from("saved_articles")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .select("id")
+        .single<{ id: number }>();
+
       if (error) {
-        throw new Error(error.message);
+        this.logger.error(`Error deleting article ${id}: ${error.message}`);
+        throw new DatabaseException(
+          error.message || `Error deleting article ${id}`
+        );
       }
       return {
         success: true,
-        message: `Article #${id} deleted successfully`,
+        message: `Article #${articleDeleted.id} deleted successfully`,
       };
     } catch (error) {
       this.logger.error(
         `Unexpected error in delete(${id}): ${(error as any).message}`
       );
-      throw error;
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        "Internal server error",
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
   }
 }

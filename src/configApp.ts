@@ -4,9 +4,15 @@ import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import * as express from "express";
 import compression from "compression";
+import { HttpExceptionFilter } from "./common/filters/http-exception";
 
 export const configureApp = (app: INestApplication) => {
   const expressApp = app.getHttpAdapter().getInstance() as express.Application;
+  // Global Exception Filter for advanced error handling.
+  app.useGlobalFilters(new HttpExceptionFilter());
+
+  // Global Validation Pipe for input validation.
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
   // Trust proxy for rate limiting behind reverse proxy
   expressApp.set("trust proxy", 1);

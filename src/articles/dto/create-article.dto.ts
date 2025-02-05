@@ -17,9 +17,6 @@ export class CreateArticleDto {
   subtitle: string = "";
 
   @IsUrl()
-  url: string = "";
-
-  @IsUrl()
   featured_image: string = "";
 
   @IsDateString()
@@ -41,10 +38,10 @@ export class CreateArticleDto {
   original_url: string = "";
 
   @IsString()
-  generatedAiContent: string = "";
+  generated_ai_content: string = "";
 
   @IsArray()
-  questionsAndAnswers: { question: string; answer: string }[] = [];
+  questions_and_answers: { question: string; answer: string }[] = [];
 
   @IsString()
   user_id: string = "";
