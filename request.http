@@ -6,11 +6,17 @@ GET http://localhost:3001/articles?userId=fc5c4e4a-0cb6-420b-9268-8fed8dd7d51c
 GET http://localhost:3001/articles/4
 
 ### Update Article
-PUT http://localhost:3001/articles/2
+PUT http://localhost:3001/articles/4
 Content-Type: application/json
 
 {
-    "title": "Updated Article Title"
+    "questions_and_answers": [
+
+        {
+            "answer": "44Test Question",
+            "question": "44Test Answer"
+        }
+    ]
 }
 
 ### Delete Article

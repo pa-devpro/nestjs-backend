@@ -65,3 +65,32 @@ Using the supabase database:
   - `POST /articles` to create a new article.
   - `PUT /articles/:id` to update an existing article.
   - `DELETE /articles/:id` to delete an article.
+
+# Timeout and Throttle Configuration
+
+## Timeout
+
+- The application uses the `@Timeout()` decorator (from NestJS Schedule module) to schedule certain tasks or delay executions.
+- In our service, methods like `getArticleById` use `@Timeout()` to execute code after a set delay, helping simulate or manage asynchronous operations.
+- This can be useful for scheduled clean-ups, caching refreshes, or any delayed process without blocking request handlers.
+
+## Throttle
+
+- Rate limiting is configured using the `ThrottlerModule` from NestJS.
+- The current configuration in
+
+app.module.ts
+
+allows:
+
+- **TTL (Time-To-Live):** 900 seconds (15 minutes)
+- **Limit:** 100 requests per IP per TTL window
+- A global guard (
+
+ThrottlerGuard
+
+) is provided to apply this policy across all endpoints.
+
+- This provides basic protection against too many requests (DoS/DDoS attacks) and helps prevent abuse while ensuring normal traffic is not hindered.
+
+Include these settings in your local or deployed environments as needed to balance performance and security.
