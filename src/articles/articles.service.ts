@@ -120,14 +120,18 @@ export class ArticlesService {
         .from("saved_articles")
         .select("*")
         .eq("title", articleToCreate.title)
-        .eq("user_id", articleToCreate.user_id)
-        .single<SavedArticle>();
+        .eq("user_id", articleToCreate.user_id);
 
       if (checkError && checkError.code !== "PGRST116") {
         throw new DatabaseException(checkError.message);
       }
 
-      if (existingArticle) {
+      console.log(
+        "existingArticle",
+        existingArticle?.length === 0,
+        existingArticle
+      );
+      if (existingArticle?.length !== 0) {
         throw new ConflictException("Article already exists");
       }
 
