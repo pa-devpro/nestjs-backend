@@ -1,5 +1,9 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { HttpException, HttpStatus } from "@nestjs/common";
+import {
+  HttpException,
+  HttpStatus,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { ArticlesService } from "../articles.service";
 import { SupabaseService } from "@/supabase";
 import { MockSupabaseService } from "@/tests/mocks/supabaseService.mock";
@@ -147,6 +151,16 @@ describe("ArticlesService", () => {
   });
 
   describe("createArticle", () => {
+    const userId = "test-user-123";
+
+    it("should throw UnauthorizedException when user_id doesnt match", async () => {
+      await expect(
+        service.create(
+          { ...articleMock, user_id: "different-id" },
+          "actual-user-id"
+        )
+      ).rejects.toThrow(UnauthorizedException);
+    });
     it("should create an article", async () => {
       // First call: Duplicate check returns an empty array
       const duplicateCheckMock = {
@@ -192,7 +206,7 @@ describe("ArticlesService", () => {
         .mockReturnValueOnce(insertMock)
         .mockReturnValueOnce(getArticleMock);
 
-      const article = await service.create(articleMock);
+      const article = await service.create(articleMock, userId);
 
       // Expect that the from method was called twice with "saved_articles"
       expect(mockSupabaseClient.from).toHaveBeenNthCalledWith(
@@ -227,7 +241,7 @@ describe("ArticlesService", () => {
 
       mockSupabaseClient.from = jest.fn().mockReturnValue(duplicateCheckMock);
 
-      await expect(service.create(articleMock)).rejects.toThrow(
+      await expect(service.create(articleMock, userId)).rejects.toThrow(
         new DatabaseException("Article already exists")
       );
     });
@@ -248,7 +262,7 @@ describe("ArticlesService", () => {
 
       mockSupabaseClient.from = jest.fn().mockReturnValue(duplicateCheckMock);
 
-      await expect(service.create(articleMock)).rejects.toThrow(
+      await expect(service.create(articleMock, userId)).rejects.toThrow(
         DatabaseException
       );
     });
@@ -283,7 +297,7 @@ describe("ArticlesService", () => {
         .mockReturnValueOnce(duplicateCheckMock)
         .mockReturnValueOnce(insertMock);
 
-      await expect(service.create(articleMock)).rejects.toThrow(
+      await expect(service.create(articleMock, userId)).rejects.toThrow(
         DatabaseException
       );
     });
@@ -315,7 +329,7 @@ describe("ArticlesService", () => {
         .mockReturnValueOnce(duplicateCheckMock)
         .mockReturnValueOnce(insertMock);
 
-      await expect(service.create(articleMock)).rejects.toThrow(
+      await expect(service.create(articleMock, userId)).rejects.toThrow(
         new HttpException(
           "Internal server error",
           HttpStatus.INTERNAL_SERVER_ERROR
@@ -354,7 +368,7 @@ describe("ArticlesService", () => {
         .mockReturnValueOnce(duplicateCheckMock)
         .mockReturnValueOnce(insertMock);
 
-      await expect(service.create(articleMock)).rejects.toThrow(
+      await expect(service.create(articleMock, userId)).rejects.toThrow(
         new HttpException("Test error", HttpStatus.BAD_REQUEST)
       );
     });
@@ -386,7 +400,7 @@ describe("ArticlesService", () => {
         .mockReturnValueOnce(duplicateCheckMock)
         .mockReturnValueOnce(insertMock);
 
-      await expect(service.create(articleMock)).rejects.toThrow(
+      await expect(service.create(articleMock, userId)).rejects.toThrow(
         new HttpException(
           "Internal server error",
           HttpStatus.INTERNAL_SERVER_ERROR

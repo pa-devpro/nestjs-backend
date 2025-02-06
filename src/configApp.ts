@@ -17,9 +17,6 @@ export const configureApp = (app: INestApplication) => {
   // Trust proxy for rate limiting behind reverse proxy
   expressApp.set("trust proxy", 1);
 
-  // Security headers
-  app.use(helmet());
-
   // Compression
   app.use(compression());
 
@@ -61,6 +58,7 @@ export const configureApp = (app: INestApplication) => {
       callback: (arg0: Error | null, arg1: boolean) => void
     ) => {
       const allowed = process.env.CLIENT_URL?.replace(/\/$/, "");
+
       const requestOrigin = origin?.replace(/\/$/, "");
       if (!origin || requestOrigin === allowed) {
         callback(null, true);
@@ -69,7 +67,10 @@ export const configureApp = (app: INestApplication) => {
       }
     },
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-    allowedHeaders: "Content-Type, Accept",
     credentials: true,
+    allowHeaders: ["Authorization", "Accept", "Content-Type"],
   });
+
+  // Security headers
+  app.use(helmet());
 };

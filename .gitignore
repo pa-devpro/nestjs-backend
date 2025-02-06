@@ -9,3 +9,4 @@ queris.http
 ormconfig.json
 package-lock.json
 ormconfig.json
+request.http

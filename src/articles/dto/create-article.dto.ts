@@ -7,6 +7,7 @@ import {
   IsNotEmpty,
   IsOptional,
   ValidateNested,
+  ValidateIf,
 } from "class-validator";
 
 export class CreateArticleDto {
@@ -20,14 +21,15 @@ export class CreateArticleDto {
   @IsString()
   subtitle: string = "";
 
-  @IsUrl()
+  @IsString()
   featured_image: string = "";
 
   @IsDateString()
   date: string = "";
 
+  @ValidateIf((o) => o.body_raw !== null)
   @IsString()
-  body_raw: string = "";
+  body_raw: string | null = null;
 
   @IsString()
   type: string = "";

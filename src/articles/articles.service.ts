@@ -5,6 +5,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { UpdateArticleDto } from "./dto/update-article.dto";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -111,16 +112,20 @@ export class ArticlesService {
   }
 
   @Timeout()
-  async create(articleToCreate: CreateArticleDto) {
+  async create(articleToCreate: CreateArticleDto, userId: string) {
     try {
       this.logger.debug("Creating article", articleToCreate);
+
+      if (userId !== articleToCreate.user_id) {
+        throw new UnauthorizedException("User ID mismatch");
+      }
 
       // Check for duplicates based on URL and user_id
       const { data: existingArticle, error: checkError } = await this.supabase
         .from("saved_articles")
         .select("*")
         .eq("title", articleToCreate.title)
-        .eq("user_id", articleToCreate.user_id)
+        .eq("user_id", userId)
         .returns<SavedArticle[]>();
 
       if (checkError && checkError.code !== "PGRST116") {
