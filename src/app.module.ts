@@ -5,7 +5,7 @@ import { ConfigModule } from "@nestjs/config";
 import { SupabaseService } from "./supabase";
 import { ScheduleModule } from "@nestjs/schedule";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
-import { APP_GUARD, Reflector } from "@nestjs/core";
+import { APP_GUARD } from "@nestjs/core";
 
 @Module({
   imports: [
