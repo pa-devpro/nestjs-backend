@@ -31,9 +31,6 @@ export class CreateArticleDto {
   @IsString()
   body_raw: string | null = null;
 
-  @IsString()
-  type: string = "";
-
   @IsArray()
   topics: string[] = [];
 
