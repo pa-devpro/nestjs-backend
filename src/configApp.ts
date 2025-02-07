@@ -8,20 +8,18 @@ import { HttpExceptionFilter } from "./common/filters/http-exception";
 
 export const configureApp = (app: INestApplication) => {
   const expressApp = app.getHttpAdapter().getInstance() as express.Application;
-  // Global Exception Filter for advanced error handling.
-  app.useGlobalFilters(new HttpExceptionFilter());
-
-  // Global Validation Pipe for input validation.
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
   // Trust proxy for rate limiting behind reverse proxy
   expressApp.set("trust proxy", 1);
 
+  // Security headers
+  expressApp.use(helmet());
+
   // Compression
-  app.use(compression());
+  expressApp.use(compression());
 
   // Rate limiting
-  app.use(
+  expressApp.use(
     rateLimit({
       windowMs: 15 * 60 * 1000,
       max: 100,
@@ -38,6 +36,9 @@ export const configureApp = (app: INestApplication) => {
       },
     })
   );
+
+  // Global Exception Filter for advanced error handling.
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   // Global validation pipe
   app.useGlobalPipes(
@@ -70,7 +71,4 @@ export const configureApp = (app: INestApplication) => {
     credentials: true,
     allowHeaders: ["Authorization", "Accept", "Content-Type"],
   });
-
-  // Security headers
-  app.use(helmet());
 };
