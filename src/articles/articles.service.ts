@@ -9,24 +9,20 @@ import {
 } from "@nestjs/common";
 import { UpdateArticleDto } from "./dto/update-article.dto";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { SupabaseService } from "@/supabase";
 import { SavedArticle } from "@/supabase/supabase-types";
 import { CreateArticleDto } from "./dto";
 import { Timeout } from "@/common/timeout.decorator";
 import { DatabaseException } from "@/common/exceptions/database.exception";
+import { SupabaseService } from "@/supabase";
 
 @Injectable()
 export class ArticlesService {
-  private supabase: SupabaseClient;
   private readonly logger = new Logger(ArticlesService.name);
 
-  constructor(private supabaseService: SupabaseService) {
-    this.supabase = this.supabaseService.getClient();
-    this.logger.log("ArticlesService initialized");
-  }
+  constructor(private supabaseService: SupabaseService) {}
 
   @Timeout()
-  async getArticleById(id: string): Promise<SavedArticle> {
+  async getArticleById(id: string, token: string): Promise<SavedArticle> {
     try {
       if (!id) {
         this.logger.warn("Article ID is required");
@@ -36,9 +32,11 @@ export class ArticlesService {
         );
       }
 
+      const supabase = await this.supabaseService.getClient(token);
+
       this.logger.debug(`Fetching article with id: ${id}`);
 
-      const { data, error: databaseError } = await this.supabase
+      const { data, error: databaseError } = await supabase
         .from("saved_articles")
         .select("*")
         .eq("id", id)
@@ -71,16 +69,21 @@ export class ArticlesService {
   }
 
   @Timeout()
-  async getArticlesByUserId(userId: string): Promise<SavedArticle[]> {
+  async getArticlesByUserId(
+    userId: string,
+    token: string
+  ): Promise<SavedArticle[]> {
     try {
       if (!userId) {
         this.logger.warn("User ID is required");
         throw new HttpException("User ID is required", HttpStatus.BAD_REQUEST);
       }
 
+      const supabase = await this.supabaseService.getClient(token);
+
       this.logger.debug(`Fetching articles for user with id: ${userId}`);
 
-      const { data, error } = await this.supabase
+      const { data, error } = await supabase
         .from("saved_articles")
         .select("*")
         .eq("user_id", userId)
@@ -112,16 +115,22 @@ export class ArticlesService {
   }
 
   @Timeout()
-  async create(articleToCreate: CreateArticleDto, userId: string) {
+  async create(
+    articleToCreate: CreateArticleDto,
+    userId: string,
+    token: string
+  ) {
     try {
-      this.logger.debug("Creating article", articleToCreate);
+      this.logger.debug("Creating article", articleToCreate.user_id);
 
       if (userId !== articleToCreate.user_id) {
         throw new UnauthorizedException("User ID mismatch");
       }
 
+      const supabase = await this.supabaseService.getClient(token);
+
       // Check for duplicates based on URL and user_id
-      const { data: existingArticle, error: checkError } = await this.supabase
+      const { data: existingArticle, error: checkError } = await supabase
         .from("saved_articles")
         .select("*")
         .eq("title", articleToCreate.title)
@@ -137,7 +146,7 @@ export class ArticlesService {
       }
 
       // If article for user does not exist, create it
-      const { data: articleCreated, error: databaseError } = await this.supabase
+      const { data: articleCreated, error: databaseError } = await supabase
         .from("saved_articles")
         .insert(articleToCreate)
         .select("id")
@@ -171,10 +180,13 @@ export class ArticlesService {
   }
 
   @Timeout()
-  async update(id: string, articleToUpdate: UpdateArticleDto) {
+  async update(id: string, articleToUpdate: UpdateArticleDto, token: string) {
     try {
       this.logger.debug(`Updating article with id: ${id}`);
-      const { data: articleUpdated, error } = await this.supabase
+
+      const supabase = await this.supabaseService.getClient(token);
+
+      const { data: articleUpdated, error } = await supabase
         .from("saved_articles")
         .update(articleToUpdate)
         .eq("id", id)
@@ -206,11 +218,12 @@ export class ArticlesService {
   }
 
   @Timeout()
-  async delete(id: string) {
+  async delete(id: string, token: string) {
     try {
       this.logger.debug(`Deleting article with id: ${id}`);
 
-      const { data: articleDeleted, error } = await this.supabase
+      const supabase = await this.supabaseService.getClient(token);
+      const { data: articleDeleted, error } = await supabase
         .from("saved_articles")
         .delete()
         .eq("id", id)

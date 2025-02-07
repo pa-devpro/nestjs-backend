@@ -19,7 +19,25 @@ export class SupabaseService {
     this.supabase = createClient(supabaseUrl, supabaseAnonKey);
   }
 
-  getClient(): SupabaseClient {
-    return this.supabase;
+  async getClient(authToken?: string): Promise<SupabaseClient> {
+    if (authToken) {
+      console.log("Setting auth token", authToken);
+      // Set auth context when token provided
+      await this.supabase.auth.setSession({
+        access_token: authToken,
+        refresh_token: "",
+      });
+    }
+    return createClient(
+      this.configService.get("SUPABASE_URL")!,
+      this.configService.get("SUPABASE_ANON_KEY")!,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        },
+      }
+    );
   }
 }

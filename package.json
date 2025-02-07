@@ -9,7 +9,10 @@
     "build": "nest build && tsc-alias",
     "vercel-build": "npm run build",
     "watch": "tsc -w",
-    "prestart": "npm run build"
+    "prestart": "npm run build",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^3.0.0",

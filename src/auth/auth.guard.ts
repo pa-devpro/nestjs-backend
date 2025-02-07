@@ -22,7 +22,7 @@ export class AuthGuard implements CanActivate {
       const {
         data: { user },
         error,
-      } = await this.supabaseService.getClient().auth.getUser(token);
+      } = await (await this.supabaseService.getClient()).auth.getUser(token);
 
       if (error || !user) {
         throw new UnauthorizedException("Invalid token");
@@ -30,6 +30,7 @@ export class AuthGuard implements CanActivate {
 
       // Add user to request for use in controllers
       request.user = user;
+      request.token = token;
       return true;
     } catch (error) {
       throw new UnauthorizedException("Invalid token");

@@ -6,9 +6,8 @@ import {
   Delete,
   Body,
   Param,
-  Query,
   UseGuards,
-  ConflictException,
+  Req,
 } from "@nestjs/common";
 import { ArticlesService } from "./articles.service";
 import { CreateArticleDto } from "./dto/create-article.dto";
@@ -22,35 +21,46 @@ export class ArticlesController {
   constructor(private readonly articlesService: ArticlesService) {}
 
   @Get()
-  async getArticlesByUserId(@User() user: { id: string }) {
+  async getArticlesByUserId(
+    @User() user: { id: string },
+    @Req() req: Request & { token: string }
+  ) {
     console.log("getArticlesByUserId", user.id);
-    return this.articlesService.getArticlesByUserId(user.id);
+    return this.articlesService.getArticlesByUserId(user.id, req.token);
   }
 
   @Get(":id")
-  async getArticle(@Param("id") id: string) {
-    return this.articlesService.getArticleById(id);
+  async getArticle(
+    @Param("id") id: string,
+    @Req() req: Request & { token: string }
+  ) {
+    return this.articlesService.getArticleById(id, req.token);
   }
 
   @Post()
   async createArticle(
     @Body() createArticleDto: CreateArticleDto,
-    @User() user: { id: string }
+    @User() user: { id: string },
+    @Req() req: Request & { token: string }
   ) {
-    return this.articlesService.create(createArticleDto, user.id);
+    return this.articlesService.create(createArticleDto, user.id, req.token);
   }
 
   @Put(":id")
   async updateArticle(
     @Param("id") id: string,
-    @Body() updateArticleDto: UpdateArticleDto
+    @Body() updateArticleDto: UpdateArticleDto,
+    @Req() req: Request & { token: string }
   ) {
-    return this.articlesService.update(id, updateArticleDto);
+    return this.articlesService.update(id, updateArticleDto, req.token);
   }
 
   @Delete(":id")
-  async deleteArticle(@Param("id") id: string) {
+  async deleteArticle(
+    @Param("id") id: string,
+    @Req() req: Request & { token: string }
+  ) {
     console.log("deleteArticle", id);
-    return this.articlesService.delete(id);
+    return this.articlesService.delete(id, req.token);
   }
 }

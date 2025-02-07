@@ -56,7 +56,7 @@ describe("ArticlesService", () => {
         }),
       });
 
-      const articles = await service.getArticlesByUserId("user1");
+      const articles = await service.getArticlesByUserId("user1", "test-token");
       expect(mockSupabaseClient.from).toHaveBeenCalledWith("saved_articles");
 
       console.log({ articles });
@@ -66,7 +66,9 @@ describe("ArticlesService", () => {
     });
 
     it("should throw error if user id is missing", async () => {
-      await expect(service.getArticlesByUserId("")).rejects.toThrow(
+      await expect(
+        service.getArticlesByUserId("", "test-token")
+      ).rejects.toThrow(
         new HttpException("User ID is required", HttpStatus.BAD_REQUEST)
       );
     });
@@ -83,9 +85,9 @@ describe("ArticlesService", () => {
         }),
       });
 
-      await expect(service.getArticlesByUserId("user1")).rejects.toThrow(
-        DatabaseException
-      );
+      await expect(
+        service.getArticlesByUserId("user1", "test-token")
+      ).rejects.toThrow(DatabaseException);
     });
   });
 
@@ -102,7 +104,7 @@ describe("ArticlesService", () => {
         }),
       });
 
-      const article = await service.getArticleById("1");
+      const article = await service.getArticleById("1", "test-token");
       expect(mockSupabaseClient.from).toHaveBeenCalledWith("saved_articles");
 
       expect(article).toBeDefined();
@@ -110,7 +112,7 @@ describe("ArticlesService", () => {
     });
 
     it("should throw error if article id is missing", async () => {
-      await expect(service.getArticleById("")).rejects.toThrow(
+      await expect(service.getArticleById("", "test-token")).rejects.toThrow(
         new HttpException("Article ID is required", HttpStatus.BAD_REQUEST)
       );
     });
@@ -127,7 +129,7 @@ describe("ArticlesService", () => {
         }),
       });
 
-      await expect(service.getArticleById("1")).rejects.toThrow(
+      await expect(service.getArticleById("1", "test-token")).rejects.toThrow(
         DatabaseException
       );
     });
@@ -144,7 +146,7 @@ describe("ArticlesService", () => {
         }),
       });
 
-      await expect(service.getArticleById("1")).rejects.toThrow(
+      await expect(service.getArticleById("1", "test-token")).rejects.toThrow(
         new HttpException("Article with id 1 not found", HttpStatus.NOT_FOUND)
       );
     });
@@ -157,7 +159,8 @@ describe("ArticlesService", () => {
       await expect(
         service.create(
           { ...articleMock, user_id: "different-id" },
-          "actual-user-id"
+          "actual-user-id",
+          "test-token"
         )
       ).rejects.toThrow(UnauthorizedException);
     });
@@ -206,7 +209,7 @@ describe("ArticlesService", () => {
         .mockReturnValueOnce(insertMock)
         .mockReturnValueOnce(getArticleMock);
 
-      const article = await service.create(articleMock, userId);
+      const article = await service.create(articleMock, userId, "test-token");
 
       // Expect that the from method was called twice with "saved_articles"
       expect(mockSupabaseClient.from).toHaveBeenNthCalledWith(
@@ -241,9 +244,9 @@ describe("ArticlesService", () => {
 
       mockSupabaseClient.from = jest.fn().mockReturnValue(duplicateCheckMock);
 
-      await expect(service.create(articleMock, userId)).rejects.toThrow(
-        new DatabaseException("Article already exists")
-      );
+      await expect(
+        service.create(articleMock, userId, "test-token")
+      ).rejects.toThrow(new DatabaseException("Article already exists"));
     });
 
     it("should throw a DatabaseException when supabase returns an error", async () => {
@@ -262,9 +265,9 @@ describe("ArticlesService", () => {
 
       mockSupabaseClient.from = jest.fn().mockReturnValue(duplicateCheckMock);
 
-      await expect(service.create(articleMock, userId)).rejects.toThrow(
-        DatabaseException
-      );
+      await expect(
+        service.create(articleMock, userId, "test-token")
+      ).rejects.toThrow(DatabaseException);
     });
 
     it("should throw a DatabaseException when insert returns an error", async () => {
@@ -297,9 +300,9 @@ describe("ArticlesService", () => {
         .mockReturnValueOnce(duplicateCheckMock)
         .mockReturnValueOnce(insertMock);
 
-      await expect(service.create(articleMock, userId)).rejects.toThrow(
-        DatabaseException
-      );
+      await expect(
+        service.create(articleMock, userId, "test-token")
+      ).rejects.toThrow(DatabaseException);
     });
 
     it("should throw a HttpException when unexpected error occurs", async () => {
@@ -329,7 +332,9 @@ describe("ArticlesService", () => {
         .mockReturnValueOnce(duplicateCheckMock)
         .mockReturnValueOnce(insertMock);
 
-      await expect(service.create(articleMock, userId)).rejects.toThrow(
+      await expect(
+        service.create(articleMock, userId, "test-token")
+      ).rejects.toThrow(
         new HttpException(
           "Internal server error",
           HttpStatus.INTERNAL_SERVER_ERROR
@@ -368,7 +373,9 @@ describe("ArticlesService", () => {
         .mockReturnValueOnce(duplicateCheckMock)
         .mockReturnValueOnce(insertMock);
 
-      await expect(service.create(articleMock, userId)).rejects.toThrow(
+      await expect(
+        service.create(articleMock, userId, "test-token")
+      ).rejects.toThrow(
         new HttpException("Test error", HttpStatus.BAD_REQUEST)
       );
     });
@@ -400,7 +407,9 @@ describe("ArticlesService", () => {
         .mockReturnValueOnce(duplicateCheckMock)
         .mockReturnValueOnce(insertMock);
 
-      await expect(service.create(articleMock, userId)).rejects.toThrow(
+      await expect(
+        service.create(articleMock, userId, "test-token")
+      ).rejects.toThrow(
         new HttpException(
           "Internal server error",
           HttpStatus.INTERNAL_SERVER_ERROR
@@ -426,7 +435,7 @@ describe("ArticlesService", () => {
 
       mockSupabaseClient.from = jest.fn().mockReturnValueOnce(updateMock);
 
-      const result = await service.update("1", articleMock);
+      const result = await service.update("1", articleMock, "test-token");
 
       expect(mockSupabaseClient.from).toHaveBeenNthCalledWith(
         1,
@@ -454,13 +463,15 @@ describe("ArticlesService", () => {
 
       mockSupabaseClient.from = jest.fn().mockReturnValueOnce(updateMock);
 
-      await expect(service.update("1", articleMock)).rejects.toThrow(
-        DatabaseException
-      );
+      await expect(
+        service.update("1", articleMock, "test-token")
+      ).rejects.toThrow(DatabaseException);
     });
 
     it("should throw a HttpException when article id is missing", async () => {
-      await expect(service.update("", articleMock)).rejects.toThrow(
+      await expect(
+        service.update("", articleMock, "test-token")
+      ).rejects.toThrow(
         new HttpException("Internal server error", HttpStatus.BAD_REQUEST)
       );
     });
@@ -480,7 +491,9 @@ describe("ArticlesService", () => {
 
       mockSupabaseClient.from = jest.fn().mockReturnValueOnce(updateMock);
 
-      await expect(service.update("1", articleMock)).rejects.toThrow(
+      await expect(
+        service.update("1", articleMock, "test-token")
+      ).rejects.toThrow(
         new HttpException(
           "Internal server error",
           HttpStatus.INTERNAL_SERVER_ERROR
@@ -506,7 +519,7 @@ describe("ArticlesService", () => {
 
       mockSupabaseClient.from = jest.fn().mockReturnValueOnce(deleteMock);
 
-      const result = await service.delete("1");
+      const result = await service.delete("1", "test-token");
 
       expect(mockSupabaseClient.from).toHaveBeenNthCalledWith(
         1,
@@ -534,11 +547,13 @@ describe("ArticlesService", () => {
 
       mockSupabaseClient.from = jest.fn().mockReturnValueOnce(deleteMock);
 
-      await expect(service.delete("1")).rejects.toThrow(DatabaseException);
+      await expect(service.delete("1", "test-token")).rejects.toThrow(
+        DatabaseException
+      );
     });
 
     it("should throw a HttpException when article id is missing", async () => {
-      await expect(service.delete("")).rejects.toThrow(
+      await expect(service.delete("", "test-token")).rejects.toThrow(
         new HttpException("Internal server error", HttpStatus.BAD_REQUEST)
       );
     });
@@ -558,7 +573,7 @@ describe("ArticlesService", () => {
 
       mockSupabaseClient.from = jest.fn().mockReturnValueOnce(deleteMock);
 
-      await expect(service.delete("1")).rejects.toThrow(
+      await expect(service.delete("1", "test-token")).rejects.toThrow(
         new HttpException(
           "Internal server error",
           HttpStatus.INTERNAL_SERVER_ERROR
