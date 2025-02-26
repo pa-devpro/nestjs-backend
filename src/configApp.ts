@@ -58,10 +58,17 @@ export const configureApp = (app: INestApplication) => {
       origin: string,
       callback: (arg0: Error | null, arg1: boolean) => void
     ) => {
+      // Check for Vercel preview deployments
+      const isVercelPreview =
+        origin &&
+        /https:\/\/ai-news-nextjs-.*?-coderhookdevs-projects\.vercel\.app/.test(
+          origin
+        );
+
       const allowed = process.env.CLIENT_URL?.replace(/\/$/, "");
 
       const requestOrigin = origin?.replace(/\/$/, "");
-      if (!origin || requestOrigin === allowed) {
+      if (!origin || requestOrigin === allowed || isVercelPreview) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"), false);
